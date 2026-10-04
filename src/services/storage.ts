@@ -1,4 +1,4 @@
-import { Product, Order, Currency } from '../types';
+import { Product, Order, Currency, ProductReview } from '../types';
 import { INITIAL_PRODUCTS } from '../data/initialProducts';
 
 const PRODUCTS_KEY = 'alafdal_luxury_products_clean_v1';
@@ -7,6 +7,7 @@ const ADMIN_AUTH_KEY = 'alafdal_admin_auth_ly_v2';
 const STORE_SETTINGS_KEY = 'alafdal_store_settings_ly_v2';
 const FAILED_ATTEMPTS_KEY = 'alafdal_failed_login_attempts_v2';
 const ACTIVE_OTP_KEY = 'alafdal_active_otp_session_v2';
+const REVIEWS_KEY = 'alafdal_luxury_reviews_v1';
 
 export const AUTHORIZED_ADMIN_EMAIL = 'aymanalarousy@gmail.com';
 
@@ -394,4 +395,73 @@ export function logoutAdmin(): void {
 // Currency Formatter - Libyan Dinar only (د.ل)
 export function formatPrice(amountInLYD: number, _unusedCurrency?: Currency): string {
   return `${amountInLYD.toLocaleString('en-US')} د.ل`;
+}
+
+// ==========================================
+// CUSTOMER REVIEWS & RATINGS (STARS & NOTES)
+// ==========================================
+
+export function getStoredReviews(): ProductReview[] {
+  try {
+    const raw = localStorage.getItem(REVIEWS_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+export function saveReviews(reviews: ProductReview[]): void {
+  try {
+    localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
+    window.dispatchEvent(new Event('alafdal_reviews_updated'));
+  } catch (err) {
+    console.error('Failed to save reviews:', err);
+  }
+}
+
+export function getProductReviews(productId: string): ProductReview[] {
+  const allReviews = getStoredReviews();
+  return allReviews.filter(r => r.productId === productId);
+}
+
+export function addProductReview(data: {
+  productId: string;
+  userName: string;
+  userCity?: string;
+  rating: number; // 1 to 5
+  notes: string;
+}): ProductReview {
+  const reviews = getStoredReviews();
+  const clampedRating = Math.max(1, Math.min(5, Math.round(data.rating)));
+
+  const newReview: ProductReview = {
+    id: `rev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    productId: data.productId,
+    userName: data.userName.trim() || 'زبون معتمد',
+    userCity: data.userCity?.trim() || 'طرابلس',
+    rating: clampedRating,
+    notes: data.notes.trim(),
+    createdAt: new Date().toISOString(),
+  };
+
+  const updatedReviews = [newReview, ...reviews];
+  saveReviews(updatedReviews);
+  return newReview;
+}
+
+export function deleteProductReview(reviewId: string): void {
+  const reviews = getStoredReviews();
+  const filtered = reviews.filter(r => r.id !== reviewId);
+  saveReviews(filtered);
+}
+
+export function getProductRatingStats(productId: string): { average: number; count: number } {
+  const reviews = getProductReviews(productId);
+  if (reviews.length === 0) {
+    return { average: 5.0, count: 0 };
+  }
+  const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
+  const average = Math.round((sum / reviews.length) * 10) / 10;
+  return { average, count: reviews.length };
 }

@@ -24,9 +24,10 @@ import {
   Shield,
   HelpCircle,
   MapPin,
-  Clock
+  Clock,
+  Star
 } from 'lucide-react';
-import { Product, Order, ProductCategory, ProductCondition } from '../types';
+import { Product, Order, ProductCategory, ProductCondition, ProductReview } from '../types';
 import { 
   AUTHORIZED_ADMIN_EMAIL,
   getStoredProducts, 
@@ -42,7 +43,9 @@ import {
   LIBYAN_COURIERS,
   saveProducts,
   formatPrice,
-  checkLockoutStatus
+  checkLockoutStatus,
+  getStoredReviews,
+  deleteProductReview
 } from '../services/storage';
 import { INITIAL_PRODUCTS } from '../data/initialProducts';
 import { WaybillModal } from './WaybillModal';
@@ -66,11 +69,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose, onViewProduct
   const [isSendingOtp, setIsSendingOtp] = useState(false);
 
   // Active View Tab
-  const [activeTab, setActiveTab] = useState<'orders' | 'add-product' | 'inventory' | 'help'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'add-product' | 'inventory' | 'reviews' | 'help'>('orders');
 
-  // Products & Orders state
+  // Products, Orders & Reviews state
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [selectedOrderForWaybill, setSelectedOrderForWaybill] = useState<Order | null>(null);
 
   // Filter / Search in admin
@@ -87,9 +91,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose, onViewProduct
   const [formOriginalPrice, setFormOriginalPrice] = useState<number | ''>('');
   const [formQuantity, setFormQuantity] = useState<number>(1);
   const [formCondition, setFormCondition] = useState<ProductCondition>('like-new');
-  const [formImages, setFormImages] = useState<string[]>([
-    'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1200&q=80'
-  ]);
+  const [formImages, setFormImages] = useState<string[]>([]);
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [formMovement, setFormMovement] = useState('أوتوماتيك سويسري معتمد');
   const [formCaseMaterial, setFormCaseMaterial] = useState('فولاذ أويستر ستيل 904L مع ذهب');
@@ -106,19 +108,23 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose, onViewProduct
   const refreshData = () => {
     setProducts(getStoredProducts());
     setOrders(getStoredOrders());
+    setReviews(getStoredReviews());
   };
 
   useEffect(() => {
     refreshData();
     const handleProductsUpdate = () => setProducts(getStoredProducts());
     const handleOrdersUpdate = () => setOrders(getStoredOrders());
+    const handleReviewsUpdate = () => setReviews(getStoredReviews());
 
     window.addEventListener('alafdal_products_updated', handleProductsUpdate);
     window.addEventListener('alafdal_orders_updated', handleOrdersUpdate);
+    window.addEventListener('alafdal_reviews_updated', handleReviewsUpdate);
 
     return () => {
       window.removeEventListener('alafdal_products_updated', handleProductsUpdate);
       window.removeEventListener('alafdal_orders_updated', handleOrdersUpdate);
+      window.removeEventListener('alafdal_reviews_updated', handleReviewsUpdate);
     };
   }, []);
 
@@ -327,6 +333,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose, onViewProduct
   const handleRestoreSampleProducts = () => {
     if (confirm('هل ترغب في استعادة الساعات التجريبية كأمثلة في المتجر؟')) {
       saveProducts(INITIAL_PRODUCTS);
+      refreshData();
+    }
+  };
+
+  const handleDeleteReview = (reviewId: string) => {
+    if (confirm('هل أنت متأكد من حذف هذا التقييم نهائياً؟')) {
+      deleteProductReview(reviewId);
       refreshData();
     }
   };
@@ -677,6 +690,18 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose, onViewProduct
               >
                 <Package className="w-4 h-4" />
                 <span>المخزون الحالي ({products.length})</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('reviews')}
+                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition cursor-pointer ${
+                  activeTab === 'reviews'
+                    ? 'bg-[#D4AF37] text-black shadow-md shadow-[#D4AF37]/20'
+                    : 'bg-[#111726] text-gray-300 hover:text-white hover:bg-[#182136] border border-white/5'
+                }`}
+              >
+                <Star className="w-4 h-4" />
+                <span>تقييمات الزبائن ({reviews.length})</span>
               </button>
 
               <button
@@ -1361,6 +1386,93 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose, onViewProduct
                   </table>
                 </div>
 
+              </div>
+            )}
+
+            {/* TAB: CUSTOMER REVIEWS & RATINGS */}
+            {activeTab === 'reviews' && (
+              <div className="bg-[#0E131F] border border-[#D4AF37]/30 rounded-2xl p-5 shadow-xl space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+                  <div>
+                    <h3 className="text-base font-bold text-white flex items-center gap-2">
+                      <Star className="w-5 h-5 text-[#D4AF37] fill-[#D4AF37]" />
+                      <span>تقييمات وملاحظات الزبائن ({reviews.length})</span>
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      هنا تجد كل تقييمات النجوم والملاحظات التي يكتبها زبائن المتجر لكل ساعة.
+                    </p>
+                  </div>
+                </div>
+
+                {reviews.length === 0 ? (
+                  <div className="text-center py-16 bg-[#111726]/40 rounded-2xl border border-white/5 space-y-3">
+                    <Star className="w-12 h-12 text-gray-600 mx-auto" />
+                    <h4 className="text-sm font-bold text-gray-300">لا توجد تقييمات مسجلة حتى الآن</h4>
+                    <p className="text-xs text-gray-500 max-w-md mx-auto">
+                      عندما يقوم الزبائن بكتابة تقييماتهم ونجومهم وملاحظاتهم في صفحة تفاصيل أي ساعة، ستظهر هنا فوراً.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {reviews.map((rev) => {
+                      const prod = products.find(p => p.id === rev.productId);
+                      return (
+                        <div
+                          key={rev.id}
+                          className="bg-[#111726] border border-white/5 rounded-xl p-4 space-y-2.5 hover:border-[#D4AF37]/30 transition"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-2">
+                            <div className="flex items-center gap-2.5">
+                              <span className="font-bold text-white text-xs">{rev.userName}</span>
+                              {rev.userCity && (
+                                <span className="text-[10px] text-gray-400">({rev.userCity})</span>
+                              )}
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+                                تقييم زبون
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center text-[#D4AF37]">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star
+                                    key={s}
+                                    className={`w-3.5 h-3.5 ${
+                                      s <= rev.rating
+                                        ? 'fill-[#D4AF37] text-[#D4AF37]'
+                                        : 'text-gray-600'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+
+                              <button
+                                onClick={() => handleDeleteReview(rev.id)}
+                                className="p-1 rounded bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 text-xs cursor-pointer"
+                                title="حذف هذا التقييم"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-[11px] text-[#D4AF37]">
+                            <span>الساعة المستهدفة:</span>
+                            <strong className="text-white">{prod ? prod.name : 'ساعة في المتجر'}</strong>
+                          </div>
+
+                          <p className="text-xs text-gray-200 leading-relaxed bg-[#161F33]/60 p-2.5 rounded-lg border border-white/5">
+                            {rev.notes}
+                          </p>
+
+                          <div className="text-[10px] text-gray-500 text-left">
+                            {new Date(rev.createdAt).toLocaleString('ar-LY')}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 

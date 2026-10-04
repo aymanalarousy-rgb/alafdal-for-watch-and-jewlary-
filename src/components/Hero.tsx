@@ -1,5 +1,6 @@
 import React from 'react';
 import { ShieldCheck, Truck, Award, Sparkles, CheckCircle2 } from 'lucide-react';
+import heroWatchImage from '../assets/images/luxury_watch_hero_1791153265521.jpg';
 
 interface HeroProps {
   onExploreClick: () => void;
@@ -75,8 +76,8 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
             <div className="relative mx-auto max-w-sm sm:max-w-md rounded-2xl p-1 bg-gradient-to-b from-[#D4AF37]/40 via-white/10 to-[#D4AF37]/10 shadow-2xl">
               <div className="relative rounded-[15px] overflow-hidden bg-[#0F1422]">
                 <img
-                  src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1000&q=80"
-                  alt="Luxury Watches"
+                  src={heroWatchImage}
+                  alt="ساعات سويسرية فاخرة أصلية"
                   className="w-full h-72 sm:h-88 object-cover transform hover:scale-105 transition duration-700"
                 />
                 

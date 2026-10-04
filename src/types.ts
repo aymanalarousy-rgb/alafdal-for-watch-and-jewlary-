@@ -48,4 +48,14 @@ export interface Order {
   updatedAt: string;
 }
 
+export interface ProductReview {
+  id: string;
+  productId: string;
+  userName: string;
+  userCity?: string;
+  rating: number; // 1 to 5
+  notes: string;
+  createdAt: string;
+}
+
 export type Currency = 'LYD';

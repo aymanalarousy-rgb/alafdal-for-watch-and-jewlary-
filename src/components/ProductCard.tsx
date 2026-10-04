@@ -4,10 +4,12 @@ import {
   Eye, 
   ShieldCheck, 
   Package, 
-  Clock
+  Clock,
+  Star
 } from 'lucide-react';
 import { Product } from '../types';
-import { formatPrice } from '../services/storage';
+import { formatPrice, getProductRatingStats } from '../services/storage';
+import heroWatchImage from '../assets/images/luxury_watch_hero_1791153265521.jpg';
 
 interface ProductCardProps {
   product: Product;
@@ -22,6 +24,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const isOutOfStock = product.quantity <= 0;
   const isSingleItem = product.quantity === 1;
+  const ratingStats = getProductRatingStats(product.id);
 
   const conditionLabels: Record<Product['condition'], { text: string; bg: string }> = {
     'brand-new': { text: 'جديد بالعلبة والضمان', bg: 'bg-emerald-950/80 text-emerald-300 border-emerald-800' },
@@ -61,7 +64,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         className="relative h-64 sm:h-72 w-full overflow-hidden bg-[#0A0D15] cursor-pointer"
       >
         <img
-          src={product.images[0] || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80'}
+          src={product.images[0] || heroWatchImage}
           alt={product.name}
           className="h-full w-full object-cover object-center group-hover:scale-108 transition-transform duration-700 ease-out"
           loading="lazy"
@@ -77,7 +80,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg bg-black/70 hover:bg-black text-gray-200 text-xs flex items-center gap-1.5 border border-white/15 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
         >
           <Eye className="w-3.5 h-3.5 text-[#D4AF37]" />
-          <span>المواصفات</span>
+          <span>المواصفات والتقييمات</span>
         </button>
       </div>
 
@@ -101,6 +104,32 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         >
           {product.name}
         </h3>
+
+        {/* Star Rating & Reviews Count */}
+        <div 
+          onClick={() => onViewDetails(product)}
+          className="flex items-center gap-1.5 text-xs cursor-pointer hover:opacity-90 transition pt-0.5"
+          title="عرض التقييمات أو إضافة تقييم"
+        >
+          <div className="flex items-center text-[#D4AF37]">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <Star
+                key={s}
+                className={`w-3.5 h-3.5 ${
+                  s <= Math.round(ratingStats.average)
+                    ? 'fill-[#D4AF37] text-[#D4AF37]'
+                    : 'text-gray-600'
+                }`}
+              />
+            ))}
+          </div>
+          <span className="text-[11px] text-[#E5C378] font-mono font-bold">
+            {ratingStats.average.toFixed(1)}
+          </span>
+          <span className="text-[10px] text-gray-400">
+            ({ratingStats.count > 0 ? `${ratingStats.count} تقييم` : 'تقييم الزبائن'})
+          </span>
+        </div>
 
         {/* Key Specification snippet */}
         <div className="text-[11px] text-gray-400 line-clamp-1 bg-[#131929]/70 px-2.5 py-1 rounded-lg border border-white/5">
