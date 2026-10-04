@@ -1,0 +1,6 @@
+{
+  "name": "الأفضل للساعات والمقتنيات الثمينة",
+  "description": "متجر فاخر للساعات السويسرية الأصلية والمقتنيات الملكية النادرة مع نظام إدارة حصري وبوليصات شحن سريعة.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
