@@ -6,7 +6,6 @@ import {
   User, 
   Phone, 
   MapPin, 
-  FileText, 
   CheckCircle, 
   Copy, 
   AlertCircle
@@ -344,23 +343,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     onChange={(e) => setCustomerAddress(e.target.value)}
                     className="w-full bg-[#111726] text-white placeholder-gray-500 p-2.5 text-xs sm:text-sm rounded-lg border border-[#D4AF37]/25 focus:border-[#D4AF37] focus:outline-none resize-none"
                   />
-                </div>
-
-                {/* Notes */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-300 mb-1">
-                    ملاحظات خاصة لمندوب التوصيل (اختياري)
-                  </label>
-                  <div className="relative">
-                    <FileText className="absolute right-3 top-2.5 w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="مثال: التوصيل بعد العصر، الاتصال المسبق..."
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      className="w-full bg-[#111726] text-white placeholder-gray-500 pr-9 pl-3 py-2 text-xs rounded-lg border border-white/10 focus:border-[#D4AF37] focus:outline-none"
-                    />
-                  </div>
                 </div>
               </div>
 
